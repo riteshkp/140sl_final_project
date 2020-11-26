@@ -1,0 +1,332 @@
+---
+title: "Stats140SL_EDA"
+author: "Wanxin Xie"
+date: "11/20/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Google_trends
+```{r}
+google_trends <- read.csv("google_trends.csv")
+dim(google_trends)
+head(google_trends)
+```
+
+## Tesla_unscaled
+```{r fig1, fig.height = 5, fig.width = 20}
+library(lubridate)
+r <- google_trends$Tesla_unscaled
+d <- as.Date(parse_date_time(as.character(google_trends$Date),orders = c("ymd", "dmy","mdy")))
+plot(d,r,type="l",xaxt="n")
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+```
+
+## Tesla_monthly
+```{r fig2, fig.height = 5, fig.width = 20}
+library(lubridate)
+r <- google_trends$Tesla_monthly
+d <- as.Date(parse_date_time(as.character(google_trends$Date),orders = c("ymd", "dmy","mdy")))
+plot(d,r,type="l",xaxt="n")
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+```
+
+## Tesla
+```{r fig3, fig.height = 5, fig.width = 20}
+library(lubridate)
+r <- google_trends$Tesla
+d <- as.Date(parse_date_time(as.character(google_trends$Date),orders = c("ymd", "dmy","mdy")))
+plot(d,r,type="l",xaxt="n")
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+```
+
+## scale
+```{r fig4, fig.height = 5, fig.width = 20}
+library(lubridate)
+
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+
+r <- range01(google_trends$scale[-c(1:6)])
+d <- as.Date(parse_date_time(as.character(google_trends$Date),orders = c("ymd", "dmy","mdy")))[-c(1:6)]
+
+google_scale <- google_trends[-c(1:6),c("Date","scale")]
+google_scale$scale <-  range01(google_scale$scale)
+google_scale$Date <- as.factor(as.Date(parse_date_time(as.character(google_trends$Date),orders = c("ymd", "dmy","mdy")))[-c(1:6)])
+google_scale
+
+TSLA_scale <- TSLA[,c("Date","Close")]
+TSLA_scale$Close <-  range01(TSLA_scale$Close)
+TSLA_scale
+
+df <- merge(google_scale, TSLA_scale, by = "Date" )
+df
+```
+```{r fig10, fig.height = 5, fig.width = 20}
+plot(as.Date(df$Date),df$scale,type="l",xaxt="n", col = "red")
+lines(as.Date(df$Date),df$Close,type="l",xaxt="n", col = "green")
+
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+
+legend(x=d[1], y=0.9, legend=c("Google", "Stock"),
+       col=c("red", "green"), lty=1:2, cex=1.8)
+```
+## Close
+```{r fig9, fig.height = 5, fig.width = 20}
+library(lubridate)
+r <- TSLA$Close
+d <- as.Date(TSLA$Date)
+plot(d,r,type="l",xaxt="n")
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+```
+
+
+# reddit_clean_posts
+```{r}
+library(tidyverse)
+reddit_clean_posts <- read.csv("reddit_clean_posts.csv")
+dim(reddit_clean_posts)
+reddit_clean_posts_time <- reddit_clean_posts %>% arrange(created_utc)
+head(reddit_clean_posts_time)
+```
+
+# Reddit sentiment hist & Google scale hist
+```{r}
+hist(reddit$sentiment)
+hist(reddit_clean_posts_time$sentiment)
+hist(log(google_scale$scale))
+hist(log(google_trends$scale))
+```
+
+
+# Reddit vs Stock
+```{r fig5, fig.height = 5, fig.width = 20}
+library(lubridate)
+r <- reddit_clean_posts_time$sentiment
+d <- as.Date(.POSIXct(reddit_clean_posts_time$created_utc, tz="UTC"))
+d
+plot(d,r,type="l",xaxt="n")
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+```
+
+```{r fig11, fig.height = 5, fig.width = 20}
+library(lubridate)
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+
+reddit <- aggregate(reddit_clean_posts_time$sentiment, by = list(reddit_clean_posts_time$Date), FUN = mean)
+reddit$sentiment <- range01(reddit$x)
+reddit$Date <- as.factor(reddit$Group.1)
+reddit
+
+TSLA_scale <- TSLA[,c("Date","Close")]
+TSLA_scale$Close <-  range01(TSLA_scale$Close)
+TSLA_scale
+
+df <- merge(reddit, TSLA_scale, by = "Date" )
+df <- df[,c("Date","sentiment","Close")]
+df
+```
+```{r fig10, fig.height = 5, fig.width = 20}
+plot(as.Date(df$Date),df$sentiment,type="l",xaxt="n", col = "red")
+lines(as.Date(df$Date),df$Close,type="l",xaxt="n", col = "green")
+
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+
+legend(x=d[1], y=0.9, legend=c("Reddit", "Stock"),
+       col=c("red", "green"), lty=1:2, cex=1.8)
+```
+
+## scale
+```{r fig4, fig.height = 5, fig.width = 20}
+library(lubridate)
+
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+
+r <- range01(google_trends$scale[-c(1:6)])
+d <- as.Date(parse_date_time(as.character(google_trends$Date),orders = c("ymd", "dmy","mdy")))[-c(1:6)]
+
+google_scale <- google_trends[-c(1:6),c("Date","scale")]
+google_scale$scale <-  range01(google_scale$scale)
+google_scale$Date <- as.factor(as.Date(parse_date_time(as.character(google_trends$Date),orders = c("ymd", "dmy","mdy")))[-c(1:6)])
+google_scale
+
+TSLA_scale <- TSLA[,c("Date","Close")]
+TSLA_scale$Close <-  range01(TSLA_scale$Close)
+TSLA_scale
+
+df <- merge(google_scale, TSLA_scale, by = "Date" )
+df
+```
+```{r fig10, fig.height = 5, fig.width = 20}
+plot(as.Date(df$Date),df$scale,type="l",xaxt="n", col = "red")
+lines(as.Date(df$Date),df$Close,type="l",xaxt="n", col = "green")
+
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+
+legend(x=d[1], y=0.9, legend=c("Google", "Stock"),
+       col=c("red", "green"), lty=1:2, cex=1.8)
+```
+
+
+## google & reddit
+```{r fig4, fig.height = 5, fig.width = 20}
+library(lubridate)
+
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+
+r <- range01(google_trends$scale[-c(1:6)])
+d <- as.Date(parse_date_time(as.character(google_trends$Date),orders = c("ymd", "dmy","mdy")))[-c(1:6)]
+
+google_scale <- google_trends[-c(1:6),c("Date","scale")]
+google_scale$scale <-  range01(google_scale$scale)
+google_scale$Date <- as.factor(as.Date(parse_date_time(as.character(google_trends$Date),orders = c("ymd", "dmy","mdy")))[-c(1:6)])
+google_scale
+
+TSLA_scale <- TSLA[,c("Date","Close")]
+TSLA_scale$Close <-  range01(TSLA_scale$Close)
+TSLA_scale
+
+
+reddit <- aggregate(reddit_clean_posts_time$sentiment[-c(1:660)]*reddit_clean_posts_time$score[-c(1:660)],
+                    by = list(reddit_clean_posts_time$Date[-c(1:660)]), 
+                    FUN = mean)
+reddit$sentiment_score <- range01(reddit$x)
+reddit$Date <- as.factor(reddit$Group.1)
+reddit
+
+df <- merge(google_scale, TSLA_scale, by = "Date" )
+df <- merge(df, reddit)
+df
+```
+```{r fig10, fig.height = 5, fig.width = 20}
+plot(as.Date(df$Date),df$scale,type="l",xaxt="n", col = "red")
+lines(as.Date(df$Date),df$Close,type="l",xaxt="n", col = "green")
+lines(as.Date(df$Date),df$sentiment,type="l",xaxt="n", col = "blue")
+
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+
+legend(x=d[10], y=0.9, legend=c("Google", "Stock", "Reddit"),
+       col=c("red", "green","blue"), lty=1:3, cex=1.8)
+```
+
+
+
+# Stock
+```{r}
+TSLA <- read.csv("TSLA.csv")
+head(TSLA)
+```
+
+## Open
+```{r fig6, fig.height = 5, fig.width = 20}
+library(lubridate)
+r <- TSLA$Open
+d <- as.Date(TSLA$Date)
+plot(d,r,type="l",xaxt="n")
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+```
+
+## High
+```{r fig7, fig.height = 5, fig.width = 20}
+library(lubridate)
+r <- TSLA$High
+d <- as.Date(TSLA$Date)
+plot(d,r,type="l",xaxt="n")
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+```
+
+
+## Low
+```{r fig8, fig.height = 5, fig.width = 20}
+library(lubridate)
+r <- TSLA$Low
+d <- as.Date(TSLA$Date)
+plot(d,r,type="l",xaxt="n")
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+```
+
+
+## Close
+```{r fig9, fig.height = 5, fig.width = 20}
+library(lubridate)
+r <- TSLA$Close
+d <- as.Date(TSLA$Date)
+plot(d,r,type="l",xaxt="n")
+axis.Date(1, at = seq(d[1], d[length(d)], length.out=100),
+        labels = seq(d[1], d[length(d)], length.out=100),
+        format= "%m/%d/%Y", las = 2)
+```
+
+
+```{r}
+# Install
+install.packages("tm")  # for text mining
+install.packages("SnowballC") # for text stemming
+install.packages("wordcloud") # word-cloud generator 
+install.packages("RColorBrewer") # color palettes
+# Load
+library("tm")
+library("SnowballC")
+library("wordcloud")
+library("RColorBrewer")
+```
+
+```{r}
+# Convert the text to lower case
+docs <- tm_map(Corpus(VectorSource(as.character(reddit_clean_posts$title))), content_transformer(tolower))
+docs
+# Remove numbers
+docs <- tm_map(docs, removeNumbers)
+# Remove english common stopwords
+docs <- tm_map(docs, removeWords, stopwords("english"))
+# Remove your own stop word
+# specify your stopwords as a character vector
+#docs <- tm_map(docs, removeWords, c("blabla1", "blabla2")) 
+# Remove punctuations
+docs <- tm_map(docs, removePunctuation)
+# Eliminate extra white spaces
+docs <- tm_map(docs, stripWhitespace)
+# Text stemming
+# docs <- tm_map(docs, stemDocument)
+```
+
+
+```{r}
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+head(d, 10)
+d
+```
+
+
+
