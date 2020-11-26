@@ -27,7 +27,7 @@ if __name__ == "__main__":
                         client_secret=client_secret,
                         username=username,
                         password=password)
-    ids = pd.read_csv('src/data/reddit_clean_posts.csv')['id']
+    ids = pd.read_csv('reddit_clean_posts.csv')['id']
 
     is_first = True
     for id in ids:
