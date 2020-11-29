@@ -9,27 +9,26 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 1. Load Data (TODO: Change to your specific ticker symbol.)
+## 1. Load Data (Nothing to do here)
 ```{r}
 library(tidyverse)
 library(tidyquant)  
 
 options("getSymbols.warning4.0"=FALSE)
 options("getSymbols.yahoo.warning"=FALSE)
-getSymbols("TSLA", from = '2019-08-01',
+getSymbols(c("INTC", "DIS", "AMZN", "TSLA"), from = '2019-08-01',
            to = "2020-11-15",warnings = FALSE,
            auto.assign = TRUE)
 ```
 
 ## 2. Pick buy and sell dates (TODO: Change to your specific dates and actions)
 ```{r}
-head(TSLA)
-dates <- as.Date(c("2019-08-01", "2020-01-03", "2020-10-01", "2020-11-03"))
-action <- c("buy", "sell", "buy", "sell")
+dates <- as.Date(c("2019-08-01", "2020-11-13"))
+action <- c("buy", "sell")
 df <- data.frame(dates = dates, action = action)
 ```
 
-## 3. The backtesting algorithm. This prints out each step so you can see what exactly is going on. Nothing to do here :)
+## 3. The backtesting algorithm. (Nothing to do here)
 ```{r}
 backTest <- function(prices, df){
   if(!all(colnames(df) == c('dates', 'action'))){
@@ -39,8 +38,8 @@ backTest <- function(prices, df){
   # Get only rows that we buy or sell from.
   relevant_prices <- prices[df$dates,]
   
-  # Initialize starting investment of $1000.
-  investment <- 1000
+  # Initialize starting investment of $1000000.
+  investment <- 1000000
   q <- 0
   print(paste0("Initializing investment at $", investment))
   print("------------------------")
@@ -69,12 +68,12 @@ backTest <- function(prices, df){
   }
   
   print(paste0("Final Amount: $", investment))
-  print(paste0("Percentage Yield: ", round((investment/1000), 2) * 100, "%"))
+  print(paste0("Percentage Yield: ", round((investment/1000000), 2) * 100, "%"))
   return (investment)
 }
 ```
 
 ## 4. Run algorithm. (TODO: Replace TSLA with your specific stock ticker)
 ```{r}
-backTest(TSLA, df)
+backTest(INTC, df)
 ```
