@@ -1,0 +1,82 @@
+---
+title: "140sl Final Project"
+author: "Jennifer Lin"
+date: "11/28/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(tidyquant)
+
+#sma function
+mySMA <- function (price,n){
+  sma <- c()
+  sma[1:(n-1)] <- NA
+  for (i in n:length(price)){
+    sma[i]<-mean(price[(i-n+1):i])
+  }
+  sma <- reclass(sma,price)
+  return(sma)
+}
+
+#grab stock data
+intel <- tq_get("INTC", from = "2019-08-01", to = "2020-11-01")
+
+#plotting sma 10 and 20
+intel %>%
+    ggplot(aes(x = date, y = close)) +
+    geom_candlestick(aes(open = open, high = high, low = low, close = close)) +
+    geom_ma(ma_fun = SMA, n = 10, color="purple", linetype="solid") +
+    geom_ma(ma_fun = SMA, n = 20, color = "green", linetype="solid") +
+    coord_x_date(xlim = c("2019-08-01", "2020-11-01"),
+                 ylim = c(40, 70))   
+
+#google data
+google <- read.csv('~/Desktop/intel_google_trend.csv')[-c(1:6),]
+google$Date <- mdy(google$Date)
+google$date<-google$Date
+google
+
+#merge google data and stock data
+df <- merge(google[,c('date', 'Intel')], 
+            intel, by = 'date')
+
+#plot google and sma 10
+df %>%
+    ggplot(aes(x = date, y = close)) +
+    geom_candlestick(aes(open = open, high = high, low = low, close = close)) +  
+    geom_ma(ma_fun = SMA, n = 10, color="purple", linetype="solid") + # Plot
+    geom_line(aes(y=mySMA(df$Intel, 11)/2 + 25), color="green")+
+    coord_x_date(xlim = c("2019-08-01", "2020-11-01"),
+                 ylim = c(40, 70))   
+
+#grab reddit
+reddit_comments <- read.csv('~/Desktop/intel_clean_comments.csv')
+reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
+
+#calculate weighted sentiment
+reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
+reddit_comments_df$date<-reddit_comments_df$Date
+
+#merge reddit data and stock data
+df2 <- merge(reddit_comments_df[,c('date', 'weighted_sentiment')], df, by = 'date')
+
+#graph stock, google, reddit
+df2 %>%
+    ggplot(aes(x = date, y = close)) +
+    geom_candlestick(aes(open = open, high = high, low = low, close = close)) +  
+    geom_ma(ma_fun = SMA, n = 10, color="purple", linetype="solid") + # Plot
+    geom_line(aes(y=mySMA(df2$Intel, 11)/2 + 25), color="green")+
+    geom_line(aes(y=mySMA(df2$weighted_sentiment, 11)*35 + 45), color="pink")+
+    coord_x_date(xlim = c("2019-08-01", "2020-11-01"),
+                 ylim = c(40, 70))   
+
+```
