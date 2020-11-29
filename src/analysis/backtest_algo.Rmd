@@ -9,8 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Load Data 
-
+## 1. Load Data (TODO: Change to your specific ticker symbol.)
 ```{r}
 library(tidyverse)
 library(tidyquant)  
@@ -22,6 +21,7 @@ getSymbols("TSLA", from = '2019-08-01',
            auto.assign = TRUE)
 ```
 
+## 2. Pick buy and sell dates (TODO: Change to your specific dates and actions)
 ```{r}
 head(TSLA)
 dates <- as.Date(c("2019-08-01", "2020-01-03", "2020-10-01", "2020-11-03"))
@@ -29,6 +29,7 @@ action <- c("buy", "sell", "buy", "sell")
 df <- data.frame(dates = dates, action = action)
 ```
 
+## 3. The backtesting algorithm. This prints out each step so you can see what exactly is going on. Nothing to do here :)
 ```{r}
 backTest <- function(prices, df){
   if(!all(colnames(df) == c('dates', 'action'))){
@@ -73,6 +74,7 @@ backTest <- function(prices, df){
 }
 ```
 
+## 4. Run algorithm. (TODO: Replace TSLA with your specific stock ticker)
 ```{r}
 backTest(TSLA, df)
 ```
