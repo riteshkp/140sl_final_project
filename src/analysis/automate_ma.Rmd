@@ -1,0 +1,123 @@
+---
+title: "ma_automate"
+author: "Ritesh Pendekanti"
+date: "November 29, 2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidyquant)  
+
+options("getSymbols.warning4.0"=FALSE)
+options("getSymbols.yahoo.warning"=FALSE)
+getSymbols(c("INTC", "DIS", "AMZN", "TSLA"), from = '2019-08-01',
+           to = "2020-11-15",warnings = FALSE,
+           auto.assign = TRUE)
+
+### My local path of my data folder. Change to yours.
+my_path <- "C:\\Users\\Ritesh Pendekanti\\Desktop\\fall_2020\\stats_140sl\\final_proj\\data"
+
+### Merge with Amazon sentiment
+amzn <- as.data.frame(AMZN)
+amzn$Date <- as.Date(row.names(amzn))
+reddit_comments <- read.csv(paste0(my_path,"\\amazon\\amazon_clean_comments.csv"))
+reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
+reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
+amazon_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], amzn, by = 'Date')
+
+### Merge with Disney sentiment
+dis <- as.data.frame(DIS)
+dis$Date <- as.Date(row.names(dis))
+reddit_comments <- read.csv(paste0(my_path,"\\disney\\disney_clean_comments.csv"))
+reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
+reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
+disney_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], dis, by = 'Date')
+
+### Merge with Intel sentiment
+intc <- as.data.frame(INTC)
+intc$Date <- as.Date(row.names(intc))
+reddit_comments <- read.csv(paste0(my_path,"\\intel\\intel_clean_comments.csv"))
+reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
+reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
+intel_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], intc, by = 'Date')
+
+### Merge with Tesla sentiment
+tsla <- as.data.frame(TSLA)
+tsla$Date <- as.Date(row.names(tsla))
+reddit_comments <- read.csv(paste0(my_path,"\\tesla\\tesla_clean_comments.csv"))
+reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
+reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
+tesla_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], tsla, by = 'Date')
+
+rm(reddit_comments)
+rm(reddit_comments_df)
+
+if(exists("amazon_df") & exists("disney_df") & exists("intel_df") & exists("tesla_df")){
+  print("Successfully loaded data for automating MA.")
+}
+```
+
+## Scale sentiment
+```{r}
+df %>%
+  ggplot(aes(x = Date, y = AMZN.Close)) +
+  geom_line(aes(y=AMZN.Adjusted), color="red") + 
+  geom_line(aes(y=weighted_sentiment_scaled), color="green") +
+  #geom_line(aes(y=weighted_sentiment_scaled), color="blue") +
+  coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
+               ylim = c(min(amzn$AMZN.Close), max(amzn$AMZN.Close))) +
+  ggtitle("Amazon Price vs Sentiment")
+```
+
+
+
+```{r}
+
+df$weighted_sentiment_scaled <- SMA((df$weighted_sentiment-mean(df$weighted_sentiment))/sd(df$weighted_sentiment), 10)*IQR(df$INTC.Close) + mean(df$INTC.Close)
+df %>%
+  ggplot(aes(x = Date, y = INTC.Close)) +
+  geom_line(aes(y=INTC.Adjusted), color="red") + 
+  geom_line(aes(y=weighted_sentiment_scaled), color="green") +
+  #geom_line(aes(y=weighted_sentiment_scaled), color="blue") +
+  coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
+               ylim = c(min(intc$INTC.Close), max(intc$INTC.Close))) +
+  ggtitle("Intel Price vs Sentiment")
+```
+
+
+```{r}
+df <- tesla_df
+df$weighted_sentiment_scaled <- SMA((df$weighted_sentiment-mean(df$weighted_sentiment))/sd(df$weighted_sentiment), 10)*IQR(df$TSLA.Close) + mean(df$TSLA.Close)
+df %>%
+  ggplot(aes(x = Date, y = TSLA.Close)) +
+  geom_line(aes(y=TSLA.Adjusted, color="Price"), size = 2) + 
+  geom_line(aes(y=weighted_sentiment_scaled, color="Sentiment"), size = 2) +
+  scale_colour_manual("", values = c("Price"=rgb(0.2, 0.6, 0.9, 1), "Sentiment"="red")) +
+  coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
+               ylim = c(min(tsla$TSLA.Close), max(tsla$TSLA.Close)))+
+  ggtitle("Tesla Price vs Sentiment MA (10 Day SMA)")
+```
+
+
+## Sentiment
+```{r}
+df <- disney_df
+df$weighted_sentiment_scaled <- SMA((df$weighted_sentiment-mean(df$weighted_sentiment))/sd(df$weighted_sentiment), 10)*IQR(df$DIS.Close) + mean(df$DIS.Close)
+df %>%
+  ggplot(aes(x = Date, y = DIS.Close)) +
+  geom_line(aes(y=DIS.Adjusted, color="Price"), size = 2) + 
+  geom_line(aes(y=weighted_sentiment_scaled, color="Sentiment"), size = 2) +
+  scale_colour_manual("", values = c("Price"=rgb(0.2, 0.6, 0.9, 1), "Sentiment"="red")) +
+  coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
+               ylim = c(min(dis$DIS.Close), max(dis$DIS.Close)))+
+  ggtitle("Disney Price vs Sentiment MA (10 Day SMA)")
+```

@@ -1,0 +1,102 @@
+---
+title: "Moving Average A"
+author: "Ritesh Pendekanti"
+date: "November 28, 2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load data
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(tidyquant)
+#sma function
+mySMA <- function (price,n){
+  sma <- c()
+  sma[1:(n-1)] <- NA
+  for (i in n:length(price)){
+    sma[i]<-mean(price[(i-n+1):i])
+  }
+  sma <- reclass(sma,price)
+  return(sma)
+}
+
+options("getSymbols.warning4.0"=FALSE)
+options("getSymbols.yahoo.warning"=FALSE)
+getSymbols(c("INTC", "DIS", "AMZN", "TSLA"), from = '2019-08-01',
+           to = "2020-11-15",warnings = FALSE,
+           auto.assign = TRUE)
+```
+
+```{r}
+my_path <- "C:\\Users\\Ritesh Pendekanti\\Desktop\\fall_2020\\stats_140sl\\final_proj\\data"
+
+#plotting sma 10 and 20
+DIS %>%
+    ggplot(aes(x = as.Date(rownames(as.data.frame(DIS))), y = DIS.Close)) +
+    geom_candlestick(aes(open = DIS.Open, high = DIS.High, low = DIS.Low, close = DIS.Close)) +
+    geom_ma(ma_fun = SMA, n = 5, color="purple", linetype="solid") +
+    # geom_ma(ma_fun = SMA, n = 20, color = "green", linetype="solid") +
+    coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
+                 ylim = c(min(DIS$DIS.Close), max(DIS$DIS.Close)))
+```
+
+```{r}
+#google data
+google <- read.csv(paste0(my_path, "\\disney\\disney_google_trends.csv"))[-c(1:6),]
+google$Date <- mdy(google$Date)
+dis <- as.data.frame(DIS)
+dis$Date <- as.Date(row.names(dis))
+
+
+#merge google data and stock data
+df <- merge(google[,c('Date', 'Disney')], 
+            dis, by = 'Date')
+```
+
+```{r}
+#plot google and sma 10
+df %>%
+  ggplot(aes(x = Date, y = DIS.Close)) +
+  geom_candlestick(aes(open = DIS.Open, high = DIS.High, low = DIS.Low, close = DIS.Close)) +
+  geom_line(aes(y=mySMA(Disney, 10)*4.7), color="green") + 
+  coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
+                 ylim = c(min(df$DIS.Close), max(df$DIS.Close)))
+```
+
+```{r}
+#grab reddit
+reddit_comments <- read.csv(paste0(my_path,"\\disney\\disney_clean_comments.csv"))
+reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
+#calculate weighted sentiment
+reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
+
+#merge reddit data and stock data
+df2 <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], df, by = 'Date')
+
+#graph stock, google, reddit
+df2 %>%
+  ggplot(aes(x = Date, y = DIS.Close)) +
+  geom_candlestick(aes(open = DIS.Open, high = DIS.High, low = DIS.Low, close = DIS.Close)) +
+  geom_line(aes(y=mySMA(weighted_sentiment, 10)*75 + 60), color="green") + 
+  # geom_ma(ma_fun = SMA, n = 30, color="purple", linetype="solid") +
+  coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
+                 ylim = c(min(df2$DIS.Close), max(df2$DIS.Close)))
+```
+
+```{r}
+DIS %>%
+    ggplot(aes(x = as.Date(rownames(as.data.frame(DIS))), y = DIS.Close)) +
+    geom_candlestick(aes(open = DIS.Open, high = DIS.High, low = DIS.Low, close = DIS.Close)) +
+    geom_ma(ma_fun = WMA, n = 20, color="purple", linetype="solid") +
+    # geom_ma(ma_fun = SMA, n = 20, color = "green", linetype="solid") +
+    coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
+                 ylim = c(min(DIS$DIS.Close), max(DIS$DIS.Close)))
+```
+
