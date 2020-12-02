@@ -7,7 +7,7 @@ For our project, we used Reddit Sentiment as a technical indicator to predict wh
 
 ## Project Poster
 Our submission poster presented:
-![](https://imgur.com/a/0gEJaMo.png)
+![](https://imgur.com/9X6uoYL.png)
 
 ## How to run
 Follow the steps below to get files running.
