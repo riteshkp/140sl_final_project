@@ -111,12 +111,16 @@ df %>%
 ## Sentiment
 ```{r}
 df <- disney_df
+dp <- 
+y_dp <- 
+
 df$weighted_sentiment_scaled <- SMA((df$weighted_sentiment-mean(df$weighted_sentiment))/sd(df$weighted_sentiment), 10)*IQR(df$DIS.Close) + mean(df$DIS.Close)
 df %>%
   ggplot(aes(x = Date, y = DIS.Close)) +
   geom_line(aes(y=DIS.Adjusted, color="Price"), size = 2) + 
   geom_line(aes(y=weighted_sentiment_scaled, color="Sentiment"), size = 2) +
-  scale_colour_manual("", values = c("Price"=rgb(0.2, 0.6, 0.9, 1), "Sentiment"="red")) +
+  scale_colour_manual("", values = c("Price"=rgb(0.2, 0.6, 0.9, 1), "Sentiment"="red")) + 
+  annotate(geom="text", x=as.Date("2019-10-30"), y=146, label="Disney Plus", color="black", size = 2) +
   coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
                ylim = c(min(dis$DIS.Close), max(dis$DIS.Close)))+
   ggtitle("Disney Price vs Sentiment MA (10 Day SMA)")
