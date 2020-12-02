@@ -17,6 +17,7 @@ First modify the endpoint of this file to collect whichever subreddit you want t
 This file will collect all posts from the past 2.5 years from the specified subreddit.
 After modifying, run the following which will save the posts into a CSV file with relevant post
 information as well as its sentiment using Textblob.
+
 `python ./src/data_collection/reddit_posts.py`
 
 ### Reddit Comments
@@ -25,20 +26,26 @@ from the posts. This will again collect all relevant comment information as well
 In order for this file to work, you will need to enter your own Reddit API key. 
 Since comments do no have a character limit, to prevent this file from being too large, the CSV
 does not provide the actual text of the comment. (This can take hours to run.)
+
 `python ./src/data_collection/reddit_comments.py`
 
 ### Google Trends
 Very simple file. Just modify name of Google Search to collect Trends from and it will return as a CSV.
+
 `python ./src/data_collection/google_manager.py`
 
 ### Trading Algorithm
 To accesss the moving averages trading algorithm, use the following file:
+
 `140sl_final_project/src/analysis/automate_ma.R`
+
 Use corresponding RMD file to get relevant dataframes to get function to work.
 
 ### Backtesting Algorithm
 To accesss the backtesting trading algorithm, use the following file:
+
 `140sl_final_project/src/analysis/backtest_algo.R`
+
 Use corresponding RMD file to get relevant dataframes to get function to work.
 
 ## Data Folder
