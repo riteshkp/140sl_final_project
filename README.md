@@ -10,7 +10,7 @@ Our submission poster presented:
 ![](https://imgur.com/QudzUhK.png)
 
 ## How to run
-Follow the steps below to get Donation Station up and running!
+Follow the steps below to get files running.
 
 ### Reddit Posts
 First modify the endpoint of this file to collect whichever subreddit you want the posts from.
