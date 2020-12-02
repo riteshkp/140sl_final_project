@@ -7,7 +7,7 @@ For our project, we used Reddit Sentiment as a technical indicator to predict wh
 
 ## Project Poster
 Our submission poster presented:
-![](https://imgur.com/QudzUhK.png)
+![](https://imgur.com/a/0gEJaMo.png)
 
 ## How to run
 Follow the steps below to get files running.
@@ -35,16 +35,16 @@ Very simple file. Just modify name of Google Search to collect Trends from and i
 `python ./src/data_collection/google_manager.py`
 
 ### Trading Algorithm
-To accesss the moving averages trading algorithm, use the following file:
+To access the moving averages trading algorithm, use the following file:
 
-`140sl_final_project/src/analysis/automate_ma.R`
+`./src/analysis/automate_ma.R`
 
 Use corresponding RMD file to get relevant dataframes to get function to work.
 
 ### Backtesting Algorithm
-To accesss the backtesting trading algorithm, use the following file:
+To access the backtesting trading algorithm, use the following file:
 
-`140sl_final_project/src/analysis/backtest_algo.R`
+`./src/analysis/backtest_algo.R`
 
 Use corresponding RMD file to get relevant dataframes to get function to work.
 
