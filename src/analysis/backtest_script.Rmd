@@ -62,6 +62,11 @@ tesla_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], tsla, by
 rm(reddit_comments)
 rm(reddit_comments_df)
 
+
+getSymbols(c("INTC", "DIS", "AMZN", "TSLA"), from = '2018-08-01',
+           to = "2020-11-15",warnings = FALSE,
+           auto.assign = TRUE)
+
 if(exists("amazon_df") & exists("disney_df") & exists("intel_df") & exists("tesla_df")){
   print("Successfully loaded data for automating MA.")
 }
@@ -134,6 +139,34 @@ for(s in stocks){
     }
   }
 }
+```
+
+```{r}
+#test <- scale_sentiment(tesla_df, TSLA)
+t1 <- get_intersections_sentiment(tesla_df, TSLA, w1=5, w2=120)
+t2 <- get_intersections_prices(tesla_df)
+backTest(TSLA, t1)
+backTest(TSLA, t2)
+backTest(TSLA, merge(t1, t2))
+
+t1 <- get_intersections_sentiment(disney_df, DIS, w1=5, w2=120)
+t2 <- get_intersections_prices(disney_df)
+backTest(DIS, t1)
+backTest(DIS, t2)
+backTest(DIS, merge(t1, t2))
+
+t1 <- get_intersections_sentiment(intel_df, INTC, w1=6, w2=120)
+t2 <- get_intersections_prices(intel_df)
+backTest(INTC, t1)
+backTest(INTC, t2)
+backTest(INTC, merge(t1, t2))
+
+amazon_df <- amazon_df[1:235,]
+t1 <- get_intersections_sentiment(amazon_df, AMZN, w1=5, w2=120)
+t2 <- get_intersections_prices(amazon_df)
+backTest(AMZN, t1)
+backTest(AMZN, t2)
+backTest(AMZN, merge(t1, t2))
 ```
 
 ## Export collected data as CSV

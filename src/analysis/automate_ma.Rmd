@@ -68,43 +68,45 @@ if(exists("amazon_df") & exists("disney_df") & exists("intel_df") & exists("tesl
 
 ## Scale sentiment
 ```{r}
+df <- disney_df
+df$weighted_sentiment_scaled <- scale_sentiment(df, DIS, w1 = 5, w2 = 10)
 df %>%
-  ggplot(aes(x = Date, y = AMZN.Close)) +
-  geom_line(aes(y=AMZN.Adjusted), color="red") + 
-  geom_line(aes(y=weighted_sentiment_scaled), color="green") +
+  ggplot(aes(x = Date, y = DIS.Close)) +
+  geom_line(aes(y=DIS.Adjusted), color="red") + 
+  geom_line(aes(y=SMA(weighted_sentiment_scaled, 10)), color="green") +
   #geom_line(aes(y=weighted_sentiment_scaled), color="blue") +
   coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
-               ylim = c(min(amzn$AMZN.Close), max(amzn$AMZN.Close))) +
-  ggtitle("Amazon Price vs Sentiment")
+               ylim = c(min(df$DIS.Close), max(df$DIS.Close))) +
+  ggtitle("Disney Price vs Sentiment")
 ```
 
-
-
-```{r}
-
-df$weighted_sentiment_scaled <- SMA((df$weighted_sentiment-mean(df$weighted_sentiment))/sd(df$weighted_sentiment), 10)*IQR(df$INTC.Close) + mean(df$INTC.Close)
-df %>%
-  ggplot(aes(x = Date, y = INTC.Close)) +
-  geom_line(aes(y=INTC.Adjusted), color="red") + 
-  geom_line(aes(y=weighted_sentiment_scaled), color="green") +
-  #geom_line(aes(y=weighted_sentiment_scaled), color="blue") +
-  coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
-               ylim = c(min(intc$INTC.Close), max(intc$INTC.Close))) +
-  ggtitle("Intel Price vs Sentiment")
-```
 
 
 ```{r}
 df <- tesla_df
-df$weighted_sentiment_scaled <- SMA((df$weighted_sentiment-mean(df$weighted_sentiment))/sd(df$weighted_sentiment), 10)*IQR(df$TSLA.Close) + mean(df$TSLA.Close)
+df$weighted_sentiment_scaled <- scale_sentiment(df, TSLA, w1 = 5, w2 = 10)
 df %>%
   ggplot(aes(x = Date, y = TSLA.Close)) +
-  geom_line(aes(y=TSLA.Adjusted, color="Price"), size = 2) + 
-  geom_line(aes(y=weighted_sentiment_scaled, color="Sentiment"), size = 2) +
-  scale_colour_manual("", values = c("Price"=rgb(0.2, 0.6, 0.9, 1), "Sentiment"="red")) +
+  geom_line(aes(y=TSLA.Adjusted), color="red") + 
+  geom_line(aes(y=SMA(weighted_sentiment_scaled, 10)), color="green") +
+  #geom_line(aes(y=weighted_sentiment_scaled), color="blue") +
   coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
-               ylim = c(min(tsla$TSLA.Close), max(tsla$TSLA.Close)))+
-  ggtitle("Tesla Price vs Sentiment MA (10 Day SMA)")
+               ylim = c(min(df$TSLA.Close), max(df$TSLA.Close))) +
+  ggtitle("Tesla Price vs Sentiment")
+```
+
+
+```{r}
+df <- intel_
+df$weighted_sentiment_scaled <- scale_sentiment(df, TSLA, w1 = 5, w2 = 10)
+df %>%
+  ggplot(aes(x = Date, y = TSLA.Close)) +
+  geom_line(aes(y=TSLA.Adjusted), color="red") + 
+  geom_line(aes(y=SMA(weighted_sentiment_scaled, 10)), color="green") +
+  #geom_line(aes(y=weighted_sentiment_scaled), color="blue") +
+  coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
+               ylim = c(min(df$TSLA.Close), max(df$TSLA.Close))) +
+  ggtitle("Tesla Price vs Sentiment")
 ```
 
 

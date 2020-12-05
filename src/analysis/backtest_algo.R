@@ -3,14 +3,12 @@ backTest <- function(prices, df, verbose = FALSE){
     return("Error: Invalid Data Frame Format.")
   }
   
-  latest_return <- 0
-  
   # Get only rows that we buy or sell from.
   relevant_prices <- prices[df$dates,]
   
   # Initialize starting investment of $1000000.
   investment <- 1000000
-  q <- 0
+  q <- 100
   
   if(verbose){
     print(paste0("Initializing investment at $", investment))
@@ -45,16 +43,20 @@ backTest <- function(prices, df, verbose = FALSE){
         print(paste0("Investment total: $", round(investment, 2)))
       }
       q_total <- 0
-      latest_return <- investment
     }
     if(verbose){
       print("------------------------")
     }
   }
+  
+  # Sell anything leftover
+  p <- as.numeric(prices["2020-11-13", 6])
+  investment <- investment + p*q_total
+  
   if(verbose){
     print(paste0("Final Amount: $", investment))
     print(paste0("Percentage Yield: ", round((investment/1000000), 2) * 100, "%"))
   }
   
-  return (100*(latest_return/1000000))
+  return (100*(investment/1000000))
 }

@@ -51,7 +51,7 @@ get_intersections_prices <- function(df, ma_type = "SMA", n = 20){
 }
 
 
-get_intersections_sentiment <- function(df, ma_type = "SMA", n = 20){
+get_intersections_sentiment <- function(df, hist_df, ma_type = "SMA", n = 20, w1, w2){
   
   ## Check for valid input format.
   if(ncol(df) != 8){
@@ -63,20 +63,22 @@ get_intersections_sentiment <- function(df, ma_type = "SMA", n = 20){
   }
   
   ## Compute MA
+  scaled_sentiment <- scale_sentiment(df, hist_df, w1, w2)
   if(ma_type == "SMA"){
-    ma_sentiment <- SMA((df[,2]-mean(df[,2]))/sd(df[,2]), n)*IQR(df[,6]) + mean(df[,6])
+    ma_sentiment <- SMA(scaled_sentiment, n)
   } else if(ma_type == "EMA"){
-    ma_sentiment <- EMA((df[,2]-mean(df[,2]))/sd(df[,2]), n)*IQR(df[,6]) + mean(df[,6])
+    ma_sentiment <- EMA(scaled_sentiment, n)
   } else {
-    ma_sentiment <- WMA((df[,2]-mean(df[,2]))/sd(df[,2]), n)*IQR(df[,6]) + mean(df[,6])
+    ma_sentiment <- WMA(scaled_sentiment, n)
   }
   
   actions <- c()
   dates <- c()
   starting_index <- sum(is.na(ma_sentiment)) + 1
+  end_index <- min(nrow(df), length(ma_sentiment)) - 1
   
-  for (i in starting_index:(nrow(df)-1)){
-    threshold <- 1.2
+  for (i in starting_index:end_index){
+    threshold <- 1.1
     cur_price <- df[i, 8]
     cur_sent <- ma_sentiment[i]
     if(cur_price*threshold < cur_sent){
@@ -92,8 +94,36 @@ get_intersections_sentiment <- function(df, ma_type = "SMA", n = 20){
   if(length(dates) == 0){
     return("Error: No intersections found")
   }
+  
   return(data.frame(
     dates = as.Date(dates),
     action = actions
   ))
+}
+
+
+scale_sentiment <- function(df, hist_df, w1, w2){
+  hist_df <- as.data.frame(hist_df)
+  
+  res <- numeric()
+  i <- 1
+  while(i <= nrow(df)){
+    # get relevant data
+    cur_sents <- df[i:(w1+i-1), 2]
+    cur_dates <- df[i:(w1+i-1), ]$Date
+    cur_row <- cur_dates[1]
+    cur_his_index <- which(rownames(hist_df) == cur_row)- 1
+    
+    # begin centering and scaling
+    cur_his <- hist_df[(cur_his_index - w2):(cur_his_index), 6]
+    scaled <- (cur_sents-mean(cur_sents))/sd(cur_sents)
+    cent_scaled <- scaled * IQR(cur_his) + mean(cur_his)
+    
+    # append and increment
+    res <- c(res, cent_scaled)
+    i <- i + w1
+    
+  }
+  
+  return (res)
 }
