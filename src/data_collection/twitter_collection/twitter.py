@@ -8,8 +8,7 @@ import shlex, subprocess
 import twint
 
 if __name__ == '__main__':
-    # stocks = ["Amazon","Disney","Intel","Tesla"]
-    stocks = ["Amazon"]
+    stocks = ["Amazon","Disney","Intel","Tesla"]
 
     cur_date = datetime.date(2020, 8, 3)
     end_date = datetime.date(2020, 11, 20)
