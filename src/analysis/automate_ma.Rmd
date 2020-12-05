@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
-library(tidyquant)  
+library(tidyquant) 
 
 options("getSymbols.warning4.0"=FALSE)
 options("getSymbols.yahoo.warning"=FALSE)
@@ -27,44 +27,63 @@ amzn <- as.data.frame(AMZN)
 amzn$Date <- as.Date(row.names(amzn))
 reddit_comments <- read.csv(paste0(my_path,"\\amazon\\amazon_clean_comments.csv"))
 reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
-reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
-reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
-amazon_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], amzn, by = 'Date')
+reddit_comments$reddit_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(reddit_sentiment ~ Date, data = reddit_comments, mean)
+amazon_df <- merge(reddit_comments_df[,c('Date', 'reddit_sentiment')], amzn, by = 'Date')
+tweets <- read.csv(paste0(my_path,"\\amazon\\Amazon_clean_tweets.csv"))
+tweets$Date <- date(tweets$date)
+tweets$twitter_sentiment <- tweets$likes_count * tweets$sentiment
+tweets_df <- aggregate(twitter_sentiment ~ Date, data = tweets, mean)
+amazon_df <- merge(tweets_df[,c('Date', 'twitter_sentiment')], amazon_df, by = 'Date')
 
 ### Merge with Disney sentiment
-dis <- as.data.frame(DIS)
+dis <- as.data.frame(dis)
 dis$Date <- as.Date(row.names(dis))
 reddit_comments <- read.csv(paste0(my_path,"\\disney\\disney_clean_comments.csv"))
 reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
-reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
-reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
-disney_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], dis, by = 'Date')
+reddit_comments$reddit_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(reddit_sentiment ~ Date, data = reddit_comments, mean)
+disney_df <- merge(reddit_comments_df[,c('Date', 'reddit_sentiment')], dis, by = 'Date')
+tweets <- read.csv(paste0(my_path,"\\disney\\Disney_clean_tweets.csv"))
+tweets$Date <- date(tweets$date)
+tweets$twitter_sentiment <- tweets$likes_count * tweets$sentiment
+tweets_df <- aggregate(twitter_sentiment ~ Date, data = tweets, mean)
+disney_df <- merge(tweets_df[,c('Date', 'twitter_sentiment')], disney_df, by = 'Date')
 
 ### Merge with Intel sentiment
-intc <- as.data.frame(INTC)
+intc <- as.data.frame(intc)
 intc$Date <- as.Date(row.names(intc))
 reddit_comments <- read.csv(paste0(my_path,"\\intel\\intel_clean_comments.csv"))
 reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
-reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
-reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
-intel_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], intc, by = 'Date')
+reddit_comments$reddit_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(reddit_sentiment ~ Date, data = reddit_comments, mean)
+intel_df <- merge(reddit_comments_df[,c('Date', 'reddit_sentiment')], intc, by = 'Date')
+tweets <- read.csv(paste0(my_path,"\\intel\\Intel_clean_tweets.csv"))
+tweets$Date <- date(tweets$date)
+tweets$twitter_sentiment <- tweets$likes_count * tweets$sentiment
+tweets_df <- aggregate(twitter_sentiment ~ Date, data = tweets, mean)
+intel_df <- merge(tweets_df[,c('Date', 'twitter_sentiment')], intel_df, by = 'Date')
 
 ### Merge with Tesla sentiment
-tsla <- as.data.frame(TSLA)
+tsla <- as.data.frame(tsla)
 tsla$Date <- as.Date(row.names(tsla))
 reddit_comments <- read.csv(paste0(my_path,"\\tesla\\tesla_clean_comments.csv"))
 reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
-reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
-reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
-tesla_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], tsla, by = 'Date')
+reddit_comments$reddit_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(reddit_sentiment ~ Date, data = reddit_comments, mean)
+tesla_df <- merge(reddit_comments_df[,c('Date', 'reddit_sentiment')], tsla, by = 'Date')
+tweets <- read.csv(paste0(my_path,"\\tesla\\Tesla_clean_tweets.csv"))
+tweets$Date <- date(tweets$date)
+tweets$twitter_sentiment <- tweets$likes_count * tweets$sentiment
+tweets_df <- aggregate(twitter_sentiment ~ Date, data = tweets, mean)
+tesla_df <- merge(tweets_df[,c('Date', 'twitter_sentiment')], tesla_df, by = 'Date')
 
 rm(reddit_comments)
+rm(tweets)
 rm(reddit_comments_df)
-
-if(exists("amazon_df") & exists("disney_df") & exists("intel_df") & exists("tesla_df")){
-  print("Successfully loaded data for automating MA.")
-}
+rm(tweets_df)
 ```
+
 
 ## Scale sentiment
 ```{r}
@@ -84,7 +103,17 @@ df %>%
 
 ```{r}
 df <- tesla_df
-df$weighted_sentiment_scaled <- scale_sentiment(df, TSLA, w1 = 5, w2 = 10)
+df$weighted_sentiment_scaled <- scale_sentiment(df, TSLA, w1 = 5, w2 = 10, sent_type = "twitter")
+df %>%
+  ggplot(aes(x = Date, y = TSLA.Close)) +
+  geom_line(aes(y=TSLA.Adjusted), color="red") + 
+  geom_line(aes(y=SMA(weighted_sentiment_scaled, 10)), color="green") +
+  #geom_line(aes(y=weighted_sentiment_scaled), color="blue") +
+  coord_x_date(xlim = c("2019-08-01", "2020-11-15"),
+               ylim = c(min(df$TSLA.Close), max(df$TSLA.Close))) +
+  ggtitle("Tesla Price vs Sentiment")
+
+df$weighted_sentiment_scaled <- scale_sentiment(df, TSLA, w1 = 5, w2 = 10, sent_type = "reddit")
 df %>%
   ggplot(aes(x = Date, y = TSLA.Close)) +
   geom_line(aes(y=TSLA.Adjusted), color="red") + 

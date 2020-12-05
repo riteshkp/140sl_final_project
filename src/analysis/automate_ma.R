@@ -1,7 +1,7 @@
 get_intersections_prices <- function(df, ma_type = "SMA", n = 20){
   
   ## Check for valid input format.
-  if(ncol(df) != 8){
+  if(ncol(df) != 9){
     stop("Invalid Data Frame object format given.")
   } else if(!(ma_type %in% c("SMA", "EMA", "WMA"))){
     stop("Invalid MA type given.")
@@ -15,19 +15,19 @@ get_intersections_prices <- function(df, ma_type = "SMA", n = 20){
   
   ## Compute MA
   if(ma_type == "SMA"){
-    ma <- SMA(df[,8], n)
+    ma <- SMA(df[,9], n)
   } else if(ma_type == "EMA"){
-    ma <- EMA(df[,8], n)
+    ma <- EMA(df[,9], n)
   } else {
-    ma <- WMA(df[,8], n)
+    ma <- WMA(df[,9], n)
   }
   
   starting_index <- sum(is.na(ma)) + 1
   
   for (i in starting_index:(nrow(df)-1)){
-    cur_price <- df[i, 8]
+    cur_price <- df[i, 9]
     cur_ma = ma[i]
-    next_price <- df[i+1, 8]
+    next_price <- df[i+1, 9]
     next_ma = ma[i+1]
     if(cur_price*threshold < cur_ma & next_price > threshold*next_ma){
       actions <- c(actions, 'buy')
@@ -51,10 +51,10 @@ get_intersections_prices <- function(df, ma_type = "SMA", n = 20){
 }
 
 
-get_intersections_sentiment <- function(df, hist_df, ma_type = "SMA", n = 20, w1, w2){
+get_intersections_sentiment <- function(df, hist_df, ma_type = "SMA", n = 20, w1, w2, sent_type = "reddit"){
   
   ## Check for valid input format.
-  if(ncol(df) != 8){
+  if(ncol(df) != 9){
     stop("Invalid Data Frame object format given.")
   } else if(!(ma_type %in% c("SMA", "EMA", "WMA"))){
     stop("Invalid MA type given.")
@@ -63,7 +63,7 @@ get_intersections_sentiment <- function(df, hist_df, ma_type = "SMA", n = 20, w1
   }
   
   ## Compute MA
-  scaled_sentiment <- scale_sentiment(df, hist_df, w1, w2)
+  scaled_sentiment <- scale_sentiment(df, hist_df, w1, w2, sent_type)
   if(ma_type == "SMA"){
     ma_sentiment <- SMA(scaled_sentiment, n)
   } else if(ma_type == "EMA"){
@@ -79,7 +79,7 @@ get_intersections_sentiment <- function(df, hist_df, ma_type = "SMA", n = 20, w1
   
   for (i in starting_index:end_index){
     threshold <- 1.1
-    cur_price <- df[i, 8]
+    cur_price <- df[i, 9]
     cur_sent <- ma_sentiment[i]
     if(cur_price*threshold < cur_sent){
       actions <- c(actions, 'buy')
@@ -102,16 +102,25 @@ get_intersections_sentiment <- function(df, hist_df, ma_type = "SMA", n = 20, w1
 }
 
 
-scale_sentiment <- function(df, hist_df, w1, w2){
+scale_sentiment <- function(df, hist_df, w1, w2, sent_type){
   hist_df <- as.data.frame(hist_df)
   
   res <- numeric()
   i <- 1
   while(i <= nrow(df)){
     # get relevant data
-    cur_sents <- df[i:(w1+i-1), 2]
+    if(sent_type == "twitter"){
+      cur_sents <- df[i:(w1+i-1), 2]
+    } else {
+      cur_sents <- df[i:(w1+i-1), 3]
+    }
     cur_dates <- df[i:(w1+i-1), ]$Date
     cur_row <- cur_dates[1]
+    
+    if(is.na(cur_row)){
+      break
+    }
+    
     cur_his_index <- which(rownames(hist_df) == cur_row)- 1
     
     # begin centering and scaling
@@ -122,8 +131,7 @@ scale_sentiment <- function(df, hist_df, w1, w2){
     # append and increment
     res <- c(res, cent_scaled)
     i <- i + w1
-    
   }
   
-  return (res)
+  return (na.omit(res))
 }

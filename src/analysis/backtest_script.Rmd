@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## 1. Load Data (Nothing to do here)
 ```{r}
 library(tidyverse)
-library(tidyquant)  
+library(tidyquant) 
 
 options("getSymbols.warning4.0"=FALSE)
 options("getSymbols.yahoo.warning"=FALSE)
@@ -28,48 +28,65 @@ amzn <- as.data.frame(AMZN)
 amzn$Date <- as.Date(row.names(amzn))
 reddit_comments <- read.csv(paste0(my_path,"\\amazon\\amazon_clean_comments.csv"))
 reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
-reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
-reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
-amazon_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], amzn, by = 'Date')
+reddit_comments$reddit_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(reddit_sentiment ~ Date, data = reddit_comments, mean)
+amazon_df <- merge(reddit_comments_df[,c('Date', 'reddit_sentiment')], amzn, by = 'Date')
+tweets <- read.csv(paste0(my_path,"\\amazon\\Amazon_clean_tweets.csv"))
+tweets$Date <- date(tweets$date)
+tweets$twitter_sentiment <- tweets$likes_count * tweets$sentiment
+tweets_df <- aggregate(twitter_sentiment ~ Date, data = tweets, mean)
+amazon_df <- merge(tweets_df[,c('Date', 'twitter_sentiment')], amazon_df, by = 'Date')
 
 ### Merge with Disney sentiment
-dis <- as.data.frame(DIS)
+dis <- as.data.frame(dis)
 dis$Date <- as.Date(row.names(dis))
 reddit_comments <- read.csv(paste0(my_path,"\\disney\\disney_clean_comments.csv"))
 reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
-reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
-reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
-disney_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], dis, by = 'Date')
+reddit_comments$reddit_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(reddit_sentiment ~ Date, data = reddit_comments, mean)
+disney_df <- merge(reddit_comments_df[,c('Date', 'reddit_sentiment')], dis, by = 'Date')
+tweets <- read.csv(paste0(my_path,"\\disney\\Disney_clean_tweets.csv"))
+tweets$Date <- date(tweets$date)
+tweets$twitter_sentiment <- tweets$likes_count * tweets$sentiment
+tweets_df <- aggregate(twitter_sentiment ~ Date, data = tweets, mean)
+disney_df <- merge(tweets_df[,c('Date', 'twitter_sentiment')], disney_df, by = 'Date')
 
 ### Merge with Intel sentiment
-intc <- as.data.frame(INTC)
+intc <- as.data.frame(intc)
 intc$Date <- as.Date(row.names(intc))
 reddit_comments <- read.csv(paste0(my_path,"\\intel\\intel_clean_comments.csv"))
 reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
-reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
-reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
-intel_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], intc, by = 'Date')
+reddit_comments$reddit_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(reddit_sentiment ~ Date, data = reddit_comments, mean)
+intel_df <- merge(reddit_comments_df[,c('Date', 'reddit_sentiment')], intc, by = 'Date')
+tweets <- read.csv(paste0(my_path,"\\intel\\Intel_clean_tweets.csv"))
+tweets$Date <- date(tweets$date)
+tweets$twitter_sentiment <- tweets$likes_count * tweets$sentiment
+tweets_df <- aggregate(twitter_sentiment ~ Date, data = tweets, mean)
+intel_df <- merge(tweets_df[,c('Date', 'twitter_sentiment')], intel_df, by = 'Date')
 
 ### Merge with Tesla sentiment
-tsla <- as.data.frame(TSLA)
+tsla <- as.data.frame(tsla)
 tsla$Date <- as.Date(row.names(tsla))
 reddit_comments <- read.csv(paste0(my_path,"\\tesla\\tesla_clean_comments.csv"))
 reddit_comments$Date <- date(as_datetime(reddit_comments$created_utc))
-reddit_comments$weighted_sentiment <- reddit_comments$score * reddit_comments$sentiment
-reddit_comments_df <- aggregate(weighted_sentiment ~ Date, data = reddit_comments, mean)
-tesla_df <- merge(reddit_comments_df[,c('Date', 'weighted_sentiment')], tsla, by = 'Date')
+reddit_comments$reddit_sentiment <- reddit_comments$score * reddit_comments$sentiment
+reddit_comments_df <- aggregate(reddit_sentiment ~ Date, data = reddit_comments, mean)
+tesla_df <- merge(reddit_comments_df[,c('Date', 'reddit_sentiment')], tsla, by = 'Date')
+tweets <- read.csv(paste0(my_path,"\\tesla\\Tesla_clean_tweets.csv"))
+tweets$Date <- date(tweets$date)
+tweets$twitter_sentiment <- tweets$likes_count * tweets$sentiment
+tweets_df <- aggregate(twitter_sentiment ~ Date, data = tweets, mean)
+tesla_df <- merge(tweets_df[,c('Date', 'twitter_sentiment')], tesla_df, by = 'Date')
 
 rm(reddit_comments)
+rm(tweets)
 rm(reddit_comments_df)
+rm(tweets_df)
 
-
-getSymbols(c("INTC", "DIS", "AMZN", "TSLA"), from = '2018-08-01',
+getSymbols(c("INTC", "DIS", "AMZN", "TSLA"), from = '2017-08-01',
            to = "2020-11-15",warnings = FALSE,
            auto.assign = TRUE)
-
-if(exists("amazon_df") & exists("disney_df") & exists("intel_df") & exists("tesla_df")){
-  print("Successfully loaded data for automating MA.")
-}
 ```
 
 ## 2. Load functions
@@ -83,10 +100,9 @@ source('automate_ma.R')
 ```{r}
 collected_data <- data.frame(
   stock = character(),
-  price_ma = character(),
-  price_window = integer(),
-  sentiment_ma = character(),
-  sentiment_window = character(),
+  ma_type = character(),
+  method_type = character(),
+  window = numeric(),
   return_percent = numeric()
 )
 
@@ -102,39 +118,44 @@ for(s in stocks){
       if(s == 'Amazon'){
         stock_df <- amazon_df
         price_df <- AMZN
+        w1 <- 5
+        w2 <- 10
       } else if(s == 'Disney'){
         stock_df <- disney_df
         price_df <- DIS
+        w1 <- 6
+        w2 <- 120
       } else if(s == 'Intel'){
         stock_df <- intel_df
         price_df <- INTC
+        w1 <- 5
+        w2 <- 120
       } else if(s == 'Tesla'){
         stock_df <- tesla_df
         price_df <- TSLA
+        w1 <- 5
+        w2 <- 60
       }
       
-      # Use sentiment MA for all possibilities
-      t1 <- get_intersections_sentiment(stock_df, ma_type = m, n = w)
+      # Use Reddit sentiment MA for all possibilities
+      t1 <- get_intersections_sentiment(stock_df, price_df, ma_type = m, n = w, w1 = w1, w2 = w2, sent_type = "reddit")
       t1_res <- backTest(price_df, t1)
-      new_entry <- data.frame(stock = s, price_ma = NA, price_window = NA,
-                              sentiment_ma = m, sentiment_window = w, 
-                              return_percent = t1_res)
+      new_entry <- data.frame(stock = s, ma_type = "reddit", method_type = m,
+                              window = w, return_percent = t1_res)
+      collected_data <- rbind(collected_data, new_entry)
+      
+      # Use Twitter sentiment MA for all possibilities
+      t2 <- get_intersections_sentiment(stock_df, price_df, ma_type = m, n = w, w1 = w1, w2 = w2, sent_type = "twitter")
+      t2_res <- backTest(price_df, t2)
+      new_entry <- data.frame(stock = s, ma_type = "twitter", method_type = m,
+                              window = w, return_percent = t2_res)
       collected_data <- rbind(collected_data, new_entry)
         
       # Use price MA for all possibilities
-      t2 <- get_intersections_prices(stock_df, ma_type = m , n = w)
-      t2_res <- backTest(price_df, t2)
-      new_entry <- data.frame(stock = s, price_ma = m, price_window = w,
-                              sentiment_ma = NA, sentiment_window = NA, 
-                              return_percent = t2_res)
-      collected_data <- rbind(collected_data, new_entry)
-        
-      # Use both on all possibilities
-      t3 <- merge(t1, t2)
+      t3 <- get_intersections_prices(stock_df, ma_type = m , n = w)
       t3_res <- backTest(price_df, t3)
-      new_entry <- data.frame(stock = s, price_ma = m, price_window = w,
-                              sentiment_ma = m, sentiment_window = w, 
-                              return_percent = t3_res)
+      new_entry <- data.frame(stock = s, ma_type = "price", method_type = m,
+                              window = w, return_percent = t3_res)
       collected_data <- rbind(collected_data, new_entry)
     }
   }
@@ -142,31 +163,42 @@ for(s in stocks){
 ```
 
 ```{r}
-#test <- scale_sentiment(tesla_df, TSLA)
-t1 <- get_intersections_sentiment(tesla_df, TSLA, w1=5, w2=120)
-t2 <- get_intersections_prices(tesla_df)
-backTest(TSLA, t1)
-backTest(TSLA, t2)
-backTest(TSLA, merge(t1, t2))
+#t1 <- get_intersections_sentiment(tesla_df, TSLA, w1=5, w2=10, sent_type = "reddit")
+#t2 <- get_intersections_sentiment(tesla_df, TSLA, w1=5, w2=10, sent_type = "twitter")
+#t3 <- get_intersections_prices(tesla_df)
+#backTest(TSLA, t1)
+#backTest(TSLA, t2)
+#backTest(TSLA, t3)
 
-t1 <- get_intersections_sentiment(disney_df, DIS, w1=5, w2=120)
-t2 <- get_intersections_prices(disney_df)
-backTest(DIS, t1)
-backTest(DIS, t2)
-backTest(DIS, merge(t1, t2))
-
-t1 <- get_intersections_sentiment(intel_df, INTC, w1=6, w2=120)
-t2 <- get_intersections_prices(intel_df)
+t1 <- get_intersections_sentiment(intel_df, INTC, w1=6, w2=120, sent_type = "reddit")
+t2 <- get_intersections_sentiment(intel_df, INTC, w1=6, w2=120, sent_type = "twitter")
+t3 <- get_intersections_prices(intel_df)
 backTest(INTC, t1)
 backTest(INTC, t2)
-backTest(INTC, merge(t1, t2))
+backTest(INTC, t3)
 
-amazon_df <- amazon_df[1:235,]
-t1 <- get_intersections_sentiment(amazon_df, AMZN, w1=5, w2=120)
-t2 <- get_intersections_prices(amazon_df)
+#t1 <- get_intersections_sentiment(disney_df, DIS, w1=5, w2=120, sent_type = "reddit")
+#t2 <- get_intersections_sentiment(disney_df, DIS, w1=5, w2=10, sent_type = "twitter")
+#t3 <- get_intersections_prices(disney_df)
+#backTest(DIS, t1)
+#backTest(DIS, t2)
+#backTest(DIS, t3)
+
+amazon_df <- amazon_df[1:220,]
+t1 <- get_intersections_sentiment(amazon_df, AMZN, w1=5, w2=5, sent_type = "reddit")
+t2 <- get_intersections_sentiment(amazon_df, AMZN, w1=5, w2=5, sent_type = "twitter")
+t3 <- get_intersections_prices(amazon_df)
 backTest(AMZN, t1)
 backTest(AMZN, t2)
-backTest(AMZN, merge(t1, t2))
+backTest(AMZN, t3)
+
+
+
+#t1 <- get_intersections_sentiment(amazon_df, AMZN, w1=5, w2=120)
+#t2 <- get_intersections_prices(amazon_df)
+#backTest(AMZN, t1)
+#backTest(AMZN, t2)
+#backTest(AMZN, merge(t1, t2))
 ```
 
 ## Export collected data as CSV

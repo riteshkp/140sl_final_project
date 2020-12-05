@@ -17,7 +17,8 @@ def calculate_sentiment(title):
 
 if __name__ == '__main__':
     stocks = ["Amazon", "Disney", "Intel", "Tesla"]
-    
+    stocks = ["Amazon"]
+
     for s in stocks:
         print("Computing sentiment for: ", s)
 

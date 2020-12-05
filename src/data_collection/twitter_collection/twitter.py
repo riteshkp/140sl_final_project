@@ -9,8 +9,8 @@ import twint
 
 if __name__ == '__main__':
     stocks = ["Amazon","Disney","Intel","Tesla"]
-
-    cur_date = datetime.date(2020, 8, 3)
+    stocks = ["Amazon"]
+    cur_date = datetime.date(2019, 8, 1)
     end_date = datetime.date(2020, 11, 20)
     delta = datetime.timedelta(days=1)
     counter = 0
