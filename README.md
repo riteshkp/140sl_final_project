@@ -7,7 +7,7 @@ For our project, we used Reddit Sentiment as a technical indicator to predict wh
 
 ## Project Poster
 Our submission poster presented:
-![](https://imgur.com/9X6uoYL.png)
+![](https://imgur.com/oKxeds6.png)
 
 ## How to run
 Follow the steps below to get files running.
@@ -18,7 +18,7 @@ This file will collect all posts from the past 2.5 years from the specified subr
 After modifying, run the following which will save the posts into a CSV file with relevant post
 information as well as its sentiment using Textblob.
 
-`python ./src/data_collection/reddit_posts.py`
+`python ./src/data_collection/reddit_collection/reddit_posts.py`
 
 ### Reddit Comments
 Next, using the CSV generated from Reddit posts, use this file to extract all reddit comments 
@@ -27,12 +27,21 @@ In order for this file to work, you will need to enter your own Reddit API key.
 Since comments do no have a character limit, to prevent this file from being too large, the CSV
 does not provide the actual text of the comment. (This can take hours to run.)
 
-`python ./src/data_collection/reddit_comments.py`
+`python ./src/data_collection/reddit_collection/reddit_comments.py`
+
+### Tweets
+There are two files to get Tweets. First to obtain all the tweets, use the following command:
+
+`python ./src/data_collection/reddit_collection/twitter_comments.py`
+
+Next to get the the sentiment of all the Tweets, use the following command:
+
+`python ./src/data_collection/reddit_collection/sentiment_manager.py`
 
 ### Google Trends
 Very simple file. Just modify name of Google Search to collect Trends from and it will return as a CSV.
 
-`python ./src/data_collection/google_manager.py`
+`python ./src/data_collection/google_collection/google_manager.py`
 
 ### Trading Algorithm
 To access the moving averages trading algorithm, use the following file:
