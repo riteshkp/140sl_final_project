@@ -3,7 +3,7 @@
 Made by Eustina Kim, Jennifer Lin, Ritesh Pendekanti, Diana Pham, Cassandra Tai, and Wanxin Xie
 
 ## About
-For our project, we used Reddit Sentiment as a technical indicator to predict whether a stock will be bull or bear.
+For our project, we used Reddit and Twitter Sentiment as a technical indicators to predict whether a stock will be bull or bear.
 
 ## Project Poster
 Our submission poster presented:
