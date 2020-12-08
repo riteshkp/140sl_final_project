@@ -7,7 +7,7 @@ For our project, we used Reddit and Twitter Sentiment as a technical indicators 
 
 ## Project Poster
 Our submission poster presented:
-![](https://imgur.com/UmQDFDT.png)
+![](https://imgur.com/N3pRaA7.png)
 
 ## How to run
 Follow the steps below to get files running.
