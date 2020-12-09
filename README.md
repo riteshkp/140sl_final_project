@@ -32,11 +32,11 @@ does not provide the actual text of the comment. (This can take hours to run.)
 ### Tweets
 There are two files to get Tweets. First to obtain all the tweets, use the following command:
 
-`python ./src/data_collection/reddit_collection/twitter_comments.py`
+`python ./src/data_collection/twitter_collection/twitter_comments.py`
 
 Next to get the the sentiment of all the Tweets, use the following command:
 
-`python ./src/data_collection/reddit_collection/sentiment_manager.py`
+`python ./src/data_collection/twitter_collection/sentiment_manager.py`
 
 ### Google Trends
 Very simple file. Just modify name of Google Search to collect Trends from and it will return as a CSV.
