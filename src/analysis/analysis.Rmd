@@ -1,0 +1,187 @@
+---
+title: "Stats 140SL Analysis"
+author: "Cassandra Tai"
+date: "11/30/2020"
+output: html_document
+---
+
+## set working directory 
+```{r}
+setwd("C:\\Users\\cassa\\Documents\\UCLA\\Fourth Year\\Stats 140SL\\final project") #change it to your own!
+```  
+
+## load libraries
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+```
+
+
+## Read in data
+```{r}
+data <- read.csv("return_data.csv", header = TRUE)
+dim(data)
+```
+
+## Clean Data
+```{r}
+data <- data[!is.na(data$return_percent),]
+data <- data[data$return_percent != 0,]
+dim(data)
+str(data)
+head(data)
+
+# baseline data
+stock <- c("Amazon","Disney","Intel", "Tesla")
+base<-data.frame(c("Amazon","Disney","Intel", "Tesla"), as.numeric(c(169,98,95,576)))
+colnames(base) = c("stock","return_percent")
+base
+```
+
+
+## finding means
+### aggregate based on ma type and stock and table
+```{r}
+data_means <- data %>% group_by(stock, ma_type)%>% summarize(means = mean(return_percent)) %>% as.data.frame()
+data_means
+table_means <- spread(data_means, key=ma_type, value = means)
+table_means
+```
+
+## groups by price_ma/sentiment_ma type regardless of price/sentiment windows
+```{r}
+method_type <- data %>% group_by(stock, method_type) %>% summarize(means = mean(return_percent))
+method_ma_type <- data %>% group_by(stock, ma_type, method_type) %>% summarize(means = mean(return_percent))
+method_type
+method_ma_type
+```
+
+# hypothesis testing
+## for reddit sentiment
+```{r}
+reddit.AMZ <- t.test(data[which(data$stock == "Amazon" & data$ma_type=="reddit"),"return_percent"]-base[1,2], alternative = "greater")
+reddit.DIS <- t.test(data[which(data$stock == "Disney" & data$ma_type=="reddit"),"return_percent"]-base[2,2], alternative = "greater")
+reddit.INT <- t.test(data[which(data$stock == "Intel" & data$ma_type=="reddit"),"return_percent"]-base[3,2], alternative = "greater")
+reddit.TSL <- t.test(data[which(data$stock == "Tesla" & data$ma_type=="reddit"),"return_percent"]-base[4,2], alternative = "greater")
+
+reddit.AMZ
+reddit.DIS
+reddit.INT
+reddit.TSL
+```
+
+## now for twitter sentiment
+```{r}
+twitter.AMZ <- t.test(data[which(data$stock == "Amazon" & data$ma_type=="twitter"),"return_percent"]-base[1,2], alternative = "greater")
+twitter.DIS <- t.test(data[which(data$stock == "Disney" & data$ma_type=="twitter"),"return_percent"]-base[2,2], alternative = "greater")
+twitter.INT <- t.test(data[which(data$stock == "Intel" & data$ma_type=="twitter"),"return_percent"]-base[3,2], alternative = "greater")
+twitter.TSL <- t.test(data[which(data$stock == "Tesla" & data$ma_type=="twitter"),"return_percent"]-base[4,2], alternative = "greater")
+
+twitter.AMZ
+twitter.DIS
+twitter.INT
+twitter.TSL
+```
+
+## now for price
+```{r}
+price.AMZ <- t.test(data[which(data$stock == "Amazon" & data$ma_type=="price"),"return_percent"]-base[1,2], alternative = "greater")
+price.DIS <- t.test(data[which(data$stock == "Disney" & data$ma_type=="price"),"return_percent"]-base[2,2], alternative = "greater")
+price.INT <- t.test(data[which(data$stock == "Intel" & data$ma_type=="price"),"return_percent"]-base[3,2], alternative = "greater")
+price.TSL <- t.test(data[which(data$stock == "Tesla" & data$ma_type=="price"),"return_percent"]-base[4,2], alternative = "greater")
+
+price.AMZ
+price.DIS
+price.INT
+price.TSL
+```
+
+
+# Make table for p-values
+```{r}
+p.vals <- data.frame(stock = c("Amazon","Disney","Intel", "Tesla"),
+           reddit.pval = round(c(reddit.AMZ$p.value, reddit.DIS$p.value, reddit.INT$p.value, reddit.TSL$p.value),4),
+           twitter.pval = round(c(twitter.AMZ$p.value, twitter.DIS$p.value, twitter.INT$p.value, twitter.TSL$p.value),4),
+           price.pval = round(c(price.AMZ$p.value, price.DIS$p.value, price.INT$p.value, price.TSL$p.value),4))
+p.vals
+```
+
+# Make table of means for graph
+```{r}
+df <- data_means %>% filter(stock %in% c("Disney", "Intel") & ma_type %in% c("reddit"))
+df <- rbind(df, c(stock = "Disney", ma_type = "base", means = base$return_percent[2]))
+df <- rbind(df, c(stock = "Intel", ma_type = "base", means = base$return_percent[3]))
+colnames(df) = c("Stock", "Method", "PercentReturn")
+#df
+df$Method <- as.character(df$Method)
+df$Method[1:2] <- "Reddit"
+df$Method[3:4] <- "Baseline"
+df$Method <- factor(df$Method)
+#df
+df$PercentReturn <- as.numeric(df$PercentReturn)
+df$PercentReturn <- df$PercentReturn-100
+df
+```
+
+
+# Make a bargraph
+```{r}
+ggplot(data = df, aes(fill = Method, x = Stock, y = PercentReturn)) + 
+  geom_bar(position = position_dodge(), stat= "identity",color="black") +
+  ylab("Percentage Return") + 
+  ggtitle("Using Reddit Sentiment to Increase Stock Return Investments") + 
+  scale_fill_manual(values = c("red","#6aa84f"))+
+  theme_minimal() + 
+  #scale_fill_brewer(palette="Blues") + 
+  theme(plot.title = element_text(size=18,color = "white", face = "bold"), 
+        axis.title.x = element_text(size=17,color = "white", face = "bold"), 
+        axis.title.y = element_text(size=17,color = "white", face = "bold"),
+        axis.title.y.right = element_text(color = "#2774ae"),
+        axis.text.y.right = element_text(color = "#2774ae"),
+        axis.text.x = element_text(size=14,color = "white"), axis.text.y = element_text(size=14,color = "white"), 
+        #axis.ticks = element_text(color = "white"),
+        legend.title=element_text(size=14,color = "white"), 
+        legend.text=element_text(size=13,color = "white"),
+        plot.background= element_rect("#2774ae"),
+        legend.position="top") +
+  scale_y_continuous(
+    sec.axis = sec_axis(~ . + 100, name = "Percentage Return"), position = "right")
+```
+
+This one has twitter
+```{r}
+#make the dataframe for graph
+df <- data_means %>% filter(stock %in% c("Disney", "Intel") & ma_type %in% c("reddit","twitter"))
+df
+df$Method <- as.character(df$Method)
+df <- rbind(df, c(stock = "Disney", ma_type = "base", means = base$return_percent[2]))
+df <- rbind(df, c(stock = "Intel", ma_type = "base", means = base$return_percent[3]))
+colnames(df) = c("Stock", "Method", "PercentReturn")
+df$Method <- factor(df$Method)
+
+df$PercentReturn <- as.numeric(df$PercentReturn)
+df$PercentReturn <- df$PercentReturn-100
+df
+
+ggplot(data = df, aes(fill = Method, x = Stock, y = PercentReturn)) + 
+  geom_bar(position = position_dodge(), stat= "identity",color="black") +
+  ylab("Percentage Return") + 
+  ggtitle("Using Reddit Sentiment to Increase Stock Return Investments") + 
+  scale_fill_manual(values = c("red","#6aa84f","blue"))+
+  theme_minimal() + 
+  #scale_fill_brewer(palette="Blues") + 
+  theme(plot.title = element_text(size=18,color = "white", face = "bold"), 
+        axis.title.x = element_text(size=17,color = "white", face = "bold"), 
+        axis.title.y = element_text(size=17,color = "white", face = "bold"),
+        axis.title.y.right = element_text(color = "#2774ae"),
+        axis.text.y.right = element_text(color = "#2774ae"),
+        axis.text.x = element_text(size=14,color = "white"), axis.text.y = element_text(size=14,color = "white"), 
+        #axis.ticks = element_text(color = "white"),
+        legend.title=element_text(size=14,color = "white"), 
+        legend.text=element_text(size=13,color = "white"),
+        plot.background= element_rect("#2774ae"),
+        legend.position="top") +
+  scale_y_continuous(
+    sec.axis = sec_axis(~ . + 100, name = "Percentage Return"), position = "right")
+```
